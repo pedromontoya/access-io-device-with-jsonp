@@ -1,0 +1,93 @@
+﻿@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h1>Client IO Device Invocation Sample</h1>
+<p>Call localhost services on a client machine through JavaScript</p>
+
+<form id="instrumentReadings">
+    <table>
+        <thead>
+            <tr>
+                <th>Wheel Balance Instrument Readings</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Camber:</td>
+                <td>
+                    <input id="camberReading" type="text" /></td>
+            </tr>
+            <tr>
+                <td>Caster:</td>
+                <td>
+                    <input id="casterReading" type="text" /></td>
+            </tr>
+            <tr>
+                <td>Toe:</td>
+                <td>
+                    <input id="toeReading" type="text" /></td>
+            </tr>
+            <tr>
+                <td>Get readings:</td>
+                <td>
+                    <button id="invokeJsonp" type="button">JSONP</button>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</form>
+
+
+<script>
+    //Initialize demo object/namespace
+    var DEMO = DEMO || {};
+
+    //Setup Events object/namespace
+    DEMO.Events = DEMO.Events || {};
+    
+    //Add dataReceived object for over-simplified pub/sub
+    DEMO.Events.dataReceived = $.Callbacks();
+
+    DEMO.webApiCallback = function (data) {
+        /// <summary>Sample function to serve as the callback invoked when a script inserted in the head is evaluated.</summary>
+        /// <param name="data" type="Object">The data returned from the localhost server.</param>
+
+        //Publish data to any functions registered with the dataReceived callback object
+        DEMO.Events.dataReceived.fire(data);
+    };
+
+    DEMO.appendScript = function (src) {
+        /// <summary>Utility function for appending a script element in the document head for JSONP calls.</summary>
+        /// <param name="src" type="Object">The URL to be called.</param>
+
+            var script = document.createElement("script");
+            script.src = src;
+            $("head").append(script);
+    };
+
+    $(function () {
+        /// <summary>Register event handlers on DOM ready.</summary>
+        
+        $camber = $("#camberReading"),
+        $caster = $("#casterReading"),
+        $toe = $("#toeReading");
+
+        DEMO.Events.dataReceived.add(function (data) {
+            /// <summary>This could be one of many callbacks to handle the dataReceived event.</summary>
+            /// <param name="data" type="Object">Data provided by event publisher.</param>
+
+            //Use provided data to set form values
+            $camber.val(data.camber);
+            $toe.val(data.toe);
+            $caster.val(data.caster);
+        });
+
+        $("#invokeJsonp").click(function () {
+            /// <summary>Event handler to invoke localhost services through JSONP. Does not violate the single origin XHR policy.</summary>
+
+            var src = "http://localhost:99/api/services?callback=DEMO.webApiCallback";
+            DEMO.appendScript(src);
+        });
+    });
+</script>
